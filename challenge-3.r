@@ -25,20 +25,27 @@ library(tidyr)
 
 # calculating results using "across" 
 results <- wahlergebnisse %>% 
-  mutate (across 
+  mutate(across 
           (c 
             (spd, cdu, die_linke, fdp, grune, af_d, freie_wahler, odp, piraten, volt_hamburg, di_b, menschliche_welt, sedat_ayhan, sldp), 
-                  function(x){x / wahlergebnisse$gultige_stimmen}
+                  function(df){df / wahlergebnisse$gultige_stimmen}
             )
           ) 
 
-# combining data; calculating and comparing mig_ratio, turn_out and afd
-combined <- stadtteil_profile %>% 
-  left_join(results, by =c("stadtteil" = "bezeichnung")) %>%
+# calculating mig_ratio
+stadtteil_profile <- stadtteil_profile %>% 
+  mutate(mig_ratio = bevolkerung_mit_migrations_hintergrund / bevolkerung)
+
+# calculating turn_out, compare to afd
+wahlergebnisse <- wahlergebnisse %>% 
   mutate(
-    mig_ratio = bevolkerung_mit_migrations_hintergrund / bevolkerung,  
     turn_out = wahlende / wahlberechtigte_insgesamt,
-    afd = results$af_d) %>% 
+    afd = results$af_d
+  )
+
+# combining data
+combined <- stadtteil_profile %>% 
+  left_join(wahlergebnisse, by =c("stadtteil" = "bezeichnung")) %>%
   select(stadtteil, mig_ratio, turn_out, afd) %>% 
   arrange(desc(afd))
 
