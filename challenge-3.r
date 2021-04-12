@@ -14,7 +14,33 @@ library(assertthat)
 # * Hint: the final table must have the following columns: stadtteil, mig_ratio, turn_out, afd.
 
 
-# combined <- …
+#load data
+wahlergebnisse <- readRDS("data/wahlergebnisse.rds")
+stadtteil_profile <- readRDS("data/stadtteil_profil.rds")
+
+# load library
+library(dplyr)
+library(tidyr)
+
+# calculating results using "across" 
+results <- wahlergebnisse %>% 
+  mutate (across 
+          (c 
+            (spd, cdu, die_linke, fdp, grune, af_d, freie_wahler, odp, piraten, volt_hamburg, di_b, menschliche_welt, sedat_ayhan, sldp), 
+                  function(df){df / wahlergebnisse$gultige_stimmen}
+            )
+          )
+
+# combining data; calculating mig_ratio, turn_out and afd
+combined <- stadtteil_profile %>% 
+  left_join(results, by =c("stadtteil" = "bezeichnung")) %>% 
+  mutate(
+    mig_ratio = bevolkerung_mit_migrations_hintergrund / bevolkerung,
+    turn_out = wahlende / wahlberechtigte_insgesamt,
+    afd = results$af_d) %>% 
+  select(stadtteil, turn_out, mig_ratio, afd) %>% 
+  arrange(desc(afd))
+
 
 if (
   assert_that(
