@@ -18,30 +18,31 @@ library(assertthat)
 wahlergebnisse <- readRDS("data/wahlergebnisse.rds")
 stadtteil_profile <- readRDS("data/stadtteil_profil.rds")
 
-# load library
+# load libraries
 library(dplyr)
 library(tidyr)
+
 
 # calculating results using "across" 
 results <- wahlergebnisse %>% 
   mutate (across 
           (c 
             (spd, cdu, die_linke, fdp, grune, af_d, freie_wahler, odp, piraten, volt_hamburg, di_b, menschliche_welt, sedat_ayhan, sldp), 
-                  function(df){df / wahlergebnisse$gultige_stimmen}
+                  function(x){x / wahlergebnisse$gultige_stimmen}
             )
-          )
+          ) 
 
-# combining data; calculating mig_ratio, turn_out and afd
+# combining data; calculating and comparing mig_ratio, turn_out and afd
 combined <- stadtteil_profile %>% 
-  left_join(results, by =c("stadtteil" = "bezeichnung")) %>% 
+  left_join(results, by =c("stadtteil" = "bezeichnung")) %>%
   mutate(
-    mig_ratio = bevolkerung_mit_migrations_hintergrund / bevolkerung,
+    mig_ratio = bevolkerung_mit_migrations_hintergrund / bevolkerung,  
     turn_out = wahlende / wahlberechtigte_insgesamt,
     afd = results$af_d) %>% 
-  select(stadtteil, turn_out, mig_ratio, afd) %>% 
+  select(stadtteil, mig_ratio, turn_out, afd) %>% 
   arrange(desc(afd))
 
-
+# PROBLEM: "Spalte 'stadtteil' enthält einen Fehler"; joining by districts ('stadtteil' & 'bezeichnung') does not work for 4 districts due to slightly different names
 if (
   assert_that(
     has_name(combined, "stadtteil"), msg = "Spalte 'stadtteil' fehlt"
